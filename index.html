@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .centerWrapper {
+            width: 70%;
+            height: 100vh;
+            margin: 0 auto;
+            padding-top: 10%;
+            background: ghostwhite;
+        }
+
+        .flex {
+            display: flex;
+            justify-content: center;
+            height: 50%;
+        }
+
+        .box {
+            background: gainsboro;
+            background: linear-gradient(135deg, #ffffff, gainsboro);
+            width: 30%;
+            min-width: fit-content;
+            height: 60%;
+            min-height: 4rem;
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            color: cornflowerblue;
+            font-size: 3rem;
+            font-style: italic;
+            font-weight: lighter;
+            transition: all 0.5s;
+            cursor: pointer;
+        }
+
+        .box:first-child {
+            margin-right: 3rem;
+        }
+
+        .box:hover {
+            background: linear-gradient(135deg, #ffffff, cornflowerblue);
+            color: #fff;
+        }
+
+        .box:active {
+            background: linear-gradient(135deg, #ffffff, cornflowerblue);
+            color: cornflowerblue;
+        }
+
+        #home {
+            height: 90%;
+        }
+
+        #tab2,
+        #tab1 {
+            display: none;
+            height: 90%;
+            padding: 0 10%;
+        }
+
+        #tab1 {
+            text-align: center;
+        }
+
+
+        #happyBox {
+            height: 50vh;
+            width: 300px;
+            margin: 0 auto 2rem;
+            box-shadow: 0 0 2px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .pool {
+            height: 50vh;
+            background: rgb(0, 240, 255);
+            border: 20px solid #ffffff;
+            border-radius: 40px;
+            box-shadow: 0 0 2px 2px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .fish {
+            position: absolute;
+            width: 70px;
+            height: 30px;
+            border-radius: 100%;
+            background: darkblue;
+            transform: translate(-50%, -50%);
+            line-height: 30px;
+            text-align: center;
+            color: #fff;
+            transition: left .5s linear .5s, top 0.5s linear .5s, transform .5s;
+        }
+
+        h2 {
+            text-decoration: underline;
+            color: #666;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="centerWrapper">
+        <div id="home">
+            <h1>中博软件面试手撸</h1>
+            <div class="flex" id="cli">
+                <div class="box" data-itemIndex="1">消消乐</div>
+                <div class="box" data-itemIndex="2">浴缸中的小鱼</div>
+            </div>
+        </div>
+        <div id="tab1">
+            <h2 id="backBtn">👈返回首页</h2>
+            <div id="happyBox">
+
+            </div>
+            <button id="btn3">开始消消乐</button>
+        </div>
+        <div id="tab2">
+            <h2 id="backBtn">👈返回首页</h2>
+            <div class="pool" id="pool"></div>
+            <hr>
+            自动模式: <button id="btn">new</button><input id="ipt" style="width: 4rem;" type="number" placeholder="几">条鱼
+            <hr>
+            手动操作模式: <button id="btn2">开启</button> ( ↑ ← ↓ → )
+        </div>
+
+    </div>
+    <script>
+        var calDeg = (start, end) => {
+            let diffX = end.x - start.x;
+            let diffY = end.y - start.y;
+            let res = 360 * Math.atan(diffY / diffX) / (2 * Math.PI);
+            // 第一象限 // 第四象限
+            if ((diffX > 0 && diffY < 0) || (diffX > 0 && diffY > 0)) {
+                return res;
+            }
+            // 第二象限 // 第三象限
+            if ((diffX < 0 && diffY < 0) || (diffX < 0 && diffY > 0)) {
+                return res + 180;
+            }
+            return 0;
+        };
+        Object.prototype.styleObj = function (obj) {
+            let str = '';
+            for (const key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    // 判断是否存在大写字母 
+                    if (/[A-Z]/.test(key)) {
+                        str +=
+                            `${key.replace(/([A-Z])/g, (match) => '-' + match.toLowerCase())}: ${obj[key]};`;
+                    } else {
+                        str += `${key}: ${obj[key]};`;
+                    }
+                }
+            }
+
+            this.style = str;
+        };
+        Object.prototype.hide = function () { this.style.display = 'none'; };
+        Object.prototype.show = function () { this.style.display = 'block'; };
+        cli.onclick = function (e) {
+            let target = e.target;
+            if (target.dataset.itemindex === '2') {
+                home.hide();
+                tab2.styleObj({
+                    display: 'block',
+                    color: 'blue',
+                    fontWeight: 'bold',
+                });
+            }
+            if (target.dataset.itemindex === '1') {
+                home.hide();
+                tab1.styleObj({
+                    display: 'block',
+                });
+            }
+        };
+        class Fish {
+            constructor(position) {
+                this.moveStack = [];
+                this.moveTimer = null;
+            }
+            init(position) {
+                this.startPosition = position;
+                this.fish = document.createElement('div');
+                this.fish.innerText = 'Fish→';
+                this.fish.classList.add('fish');
+                switch (this.startPosition) {
+                    case 'center':
+                        this.startPosition = { x: '50%', y: '50%' };
+                        break;
+
+                    default:
+                        this.startPosition = { x: this.startPosition.x + 'px', y: this.startPosition.y + 'px' };
+                        break;
+                }
+                pool.appendChild(this.fish);
+                this.fish.styleObj({
+                    left: this.startPosition.x,
+                    top: this.startPosition.y,
+                });
+
+
+
+            }
+            move(target) {
+                this.moveStack.push(target);
+                if (this.moveTimer) return;
+                let zeroTimer = null;
+                let currentTarget = this.moveStack.shift();
+                console.log(currentTarget);
+
+                let deg = calDeg({ x: parseFloat(window.getComputedStyle(this.fish).left), y: parseFloat(window.getComputedStyle(this.fish).top) }, currentTarget);
+                console.log(deg);
+                this.fish.style.transform = `translate(-50%, -50%) rotate(${deg}deg)`;
+
+
+
+                const moveFn = () => {
+                    clearTimeout(zeroTimer);
+
+                    zeroTimer = setTimeout(() => {
+                        this.fish.style.left = currentTarget.x + 'px';
+                        this.fish.style.top = currentTarget.y + 'px';
+                    }, 0);
+
+
+                    if (this.moveStack.length === 0) {
+                        clearInterval(this.moveTimer);
+                        this.moveTimer = null;
+                    }
+                };
+                setTimeout(moveFn, Math.random() * 1000);
+
+                // moveFn();
+                this.moveTimer = setInterval(moveFn, 1000);
+            }
+            move2Direction(direction) {
+                const smallFn = (direction, flag) => {
+                    let currentLeft = window.getComputedStyle(this.fish)[direction];
+                    currentLeft = currentLeft.replace('px', '') * 1;
+                    this.moveTimer = setInterval(() => {
+                        flag ? currentLeft -= 4 : currentLeft += 4;
+                        this.fish.style[direction] = currentLeft + 'px';
+                    }, 20);
+                };
+                if (this.moveTimer) return;
+                this.fish.style.transition = 'transform .5s';
+                document.onkeyup = () => {
+
+                    clearInterval(this.moveTimer);
+                    this.moveTimer = null;
+                };
+                switch (direction) {
+                    case 'left':
+                        this.fish.style.transform = `translate(-50%, -50%) rotate(180deg)`;
+                        smallFn('left', true);
+                        break;
+                    case 'right':
+                        this.fish.style.transform = `translate(-50%, -50%) rotate(0deg)`;
+                        smallFn('left', false);
+                        break;
+                    case 'top':
+                        this.fish.style.transform = `translate(-50%, -50%) rotate(270deg)`;
+                        smallFn('top', true);
+                        break;
+                    case 'bottom':
+                        this.fish.style.transform = `translate(-50%, -50%) rotate(90deg)`;
+                        smallFn('top', false);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+            autoMode() {
+                // 获取pool的宽高
+                const poolWidth = pool.clientWidth;
+                const poolHeight = pool.clientHeight;
+                this.init({
+                    x: Math.floor(Math.random() * poolWidth),
+                    y: Math.floor(Math.random() * poolHeight)
+                });
+                setInterval(() => {
+                    this.move({
+                        x: Math.floor(Math.random() * poolWidth),
+                        y: Math.floor(Math.random() * poolHeight)
+                    });
+                }, 2000);
+            }
+            static randomMode(num) {
+                for (let i = 0; i < num; i++) {
+                    new Fish().autoMode();
+                }
+            }
+            static allDie() {
+                Array.from(document.getElementsByClassName('fish')).forEach(i => i.remove());
+            }
+
+        }
+        btn.onclick = () => {
+            Fish.allDie();
+            ipt.value > 0 ? Fish.randomMode(Math.ceil(ipt.value)) : Fish.randomMode(1);
+        };
+        var theFish;
+        btn2.onclick = () => {
+            Fish.allDie();
+            theFish = new Fish();
+            theFish.init('center');
+        };
+        // 键盘事件     e
+        document.addEventListener('keydown', (e) => {
+            console.log(e.key);
+            switch (e.key) {
+                case 'ArrowRight':
+                    theFish.move2Direction('right');
+                    break;
+                case 'ArrowUp':
+                    theFish.move2Direction('top');
+                    break;
+                case 'ArrowDown':
+                    theFish.move2Direction('bottom');
+                    break;
+                case 'ArrowLeft':
+                    theFish.move2Direction('left');
+                    break;
+                default:
+                    break;
+            }
+        });
+
+        backBtn.onclick = () => {
+            Fish.allDie();
+            tab2.hide();
+            home.show();
+        };
+
+        class HappyDel {
+            constructor() {
+                this.colorArr = ['red', 'blue', 'green', 'yellow'];
+                this.matrix = [];
+                this.init();
+                this.rander();
+            }
+            init() {
+                for (let i = 0; i < 4; i++) {
+                    let column = [];
+                    for (let j = 0; j < 5; j++) {
+                        column.push(parseInt(Math.random() * 5));
+                    }
+                    this.matrix.push(column);
+                }
+                console.log(this.matrix);
+            }
+            render() {
+                let htmlStr = ``;
+                this.matrix.forEach((colArr) => {
+                    colArr.forEach(colItem => {
+
+                    });
+                });
+            }
+        }
+
+        // btn3.onclick = () => {
+        //     const happyProject = new HappyDel();
+        // }
+    </script>
+</body>
+
+</html>
